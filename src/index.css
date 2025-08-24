@@ -1,0 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities; 
+.text-xxs{
+    margin-top: 0;
+    font-size: 0.5rem;
+}
