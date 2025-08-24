@@ -177,88 +177,157 @@ function CodeConq() {
   }, [currentFormation]);
 
   return (
-    <div className="flex flex-col items-center p-4 sm:p-6 space-y-4 bg-gray-50 min-h-screen">
-      <h1 className="text-3xl font-bold">Romans vs Barbarians - Player vs AI</h1>
-      <p className="text-gray-600 text-center max-w-md">You control the Romans! Click to select and move/attack. Barbarians move automatically.</p>
-      <button
-        onClick={restartGame}
-        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-      >
-        🔄 Switch to {Object.keys(formations)[(Object.keys(formations).indexOf(currentFormation) + 1) % Object.keys(formations).length]} Formation
-      </button>
-      <div className="text-sm text-gray-700">Current Formation: {currentFormation}</div>
-      <div className="text-sm text-gray-700">Round: {round}</div>
-      
-      {/* End Turn Button */}
-      {turn === "Romans" && (
+    <div className="flex flex-col items-center p-4 sm:p-6 space-y-6 bg-gradient-to-br from-green-800 via-green-700 to-green-900 min-h-screen">
+      {/* Game Header */}
+      <div className="game-ui p-6 text-center">
+        <h1 className="text-4xl font-bold text-yellow-200 mb-2 drop-shadow-lg">Romans vs Barbarians</h1>
+        <p className="text-yellow-100 text-lg">Player vs AI Battle</p>
+        <p className="text-green-200 text-sm mt-2">You control the Romans! Click to select and move/attack. Barbarians move automatically.</p>
+      </div>
+
+      {/* Game Controls */}
+      <div className="game-ui p-4 flex flex-wrap gap-4 items-center justify-center">
         <button
-          onClick={() => {
-            setTurn("Barbarians");
-            setSelectedId(null);
-          }}
-          className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+          onClick={restartGame}
+          className="battle-button px-6 py-3 text-lg font-semibold"
         >
-          ⏭️ End Turn
+          🔄 Switch to {Object.keys(formations)[(Object.keys(formations).indexOf(currentFormation) + 1) % Object.keys(formations).length]} Formation
         </button>
-      )}
-  
+        
+        {turn === "Romans" && (
+          <button
+            onClick={() => {
+              setTurn("Barbarians");
+              setSelectedId(null);
+            }}
+            className="battle-button px-6 py-3 text-lg font-semibold bg-yellow-600 hover:bg-yellow-700"
+          >
+            ⏭️ End Turn
+          </button>
+        )}
+        
+        <div className="text-yellow-200 font-semibold">
+          <span className="block">Formation: {currentFormation}</span>
+          <span className="block">Round: {round}</span>
+        </div>
+      </div>
+
+      {/* Turn Info */}
+      <div className="game-ui p-4 text-center">
+        <div className="text-2xl font-bold text-yellow-200">
+          {checkEnd() || `${turn.toUpperCase()} TURN`}
+        </div>
+      </div>
+      
       {/* Selected Unit Display */}
       {selected && (
-        <div className="p-2 sm:p-3 bg-gray-100 border rounded text-xs sm:text-sm w-full max-w-md shadow-lg">
-          <h2 className="font-bold mb-1">Selected Unit</h2>
-          <p>🧱 <strong>{selected.name}</strong></p>
-          <p>❤️ HP: {selected.hp}</p>
-          <p>🎯 Attack: {selected.attack}</p>
-          <p>🎯 Range: {selected.range}</p>
-          <p>🚶‍♂️ Move: {selected.move}</p>
-          <p>🚶‍♂️ Role: {selected.role}</p>
-
+        <div className="game-ui p-4 text-yellow-200 max-w-md">
+          <h2 className="font-bold mb-3 text-xl border-b border-yellow-600 pb-2">Selected Unit</h2>
+          <div className="space-y-2 text-sm">
+            <p><span className="text-yellow-300">🧱</span> <strong>{selected.name}</strong></p>
+            <p><span className="text-red-400">❤️</span> HP: {selected.hp}/{selected.maxHp}</p>
+            <p><span className="text-orange-400">⚔️</span> Attack: {selected.attack}</p>
+            <p><span className="text-blue-400">🎯</span> Range: {selected.range}</p>
+            <p><span className="text-green-400">🚶‍♂️</span> Move: {selected.move}</p>
+            <p><span className="text-purple-400">🏷️</span> Role: {selected.role}</p>
+          </div>
+          
+          {/* Health Bar */}
+          <div className="mt-3">
+            <div className="text-xs text-yellow-200 mb-1">Health</div>
+            <div className="w-full bg-gray-700 rounded-full h-2 border border-gray-600">
+              <div 
+                className="health-bar rounded-full h-full" 
+                style={{ width: `${(selected.hp / selected.maxHp) * 100}%` }}
+              ></div>
+            </div>
+          </div>
         </div>
       )}
-     {/* Turn Info */}
-     <div className="text-lg font-semibold">
-        {checkEnd() || `${turn.toUpperCase()} TURN`}
-      </div>
-          {/* Battle Log */}
-          <div className="max-h-32 overflow-y-auto border p-2 text-xs sm:text-sm bg-gray-100 w-full max-w-md sm:max-w-xl">
-        {log.map((line, i) => (
-          <div key={i}>{line}</div>
-        ))}
-      </div>
-      {/* Game Grid */}
-      <div className="grid grid-cols-8 grid-rows-8 gap-2 w-fit border-2 border-gray-300 bg-white p-4 rounded-lg shadow-lg">
-        {[...Array(GRID_SIZE)].flatMap((_, y) =>
-          [...Array(GRID_SIZE)].map((_, x) => {
-            const u = getUnit(x, y);
-            const isSelected = u?.id === selectedId;
-            const key = `${x},${y}`;
-            const isMove = highlightMove.includes(key);
-            const isAttack = highlightAttack.includes(key);
-            const Icon = u?.Icon;
-            const percent = u ? (u.hp / u.maxHp) * 100 : 0;
-            const role = u?.role;
-            return (
-              <motion.div
-                key={key}
-                onClick={() => handleClick(x, y)}
-                whileTap={{ scale: 0.9 }}
-                className={`w-12 h-16 sm:w-20 sm:h-24 flex flex-col items-center justify-center border-2 border-gray-200 text-xs sm:text-sm cursor-pointer transition-all duration-200
-                ${isSelected ? "bg-yellow-300 hover:bg-yellow-400" : isMove ? "bg-green-200 hover:bg-green-300" : isAttack ? "bg-red-200 hover:bg-red-300" : "bg-white hover:bg-gray-100"}`}
-              >
-                {Icon && (
-                  <>
-                    <div className="text-2xl mb-1"><Icon /></div>
-                    <div className="w-full h-2 bg-gray-300 rounded">
-                      <div className={`h-2 ${getHpBarColor(percent)} rounded`} style={{ width: `${percent}%` }}></div>
-                    </div>
-                    <div className="text-xss ">{u.hp} HP {role}</div>
 
-                  </>
-                )}
-              </motion.div>
-            );
-          })
-        )}
+      {/* Battle Log */}
+      <div className="game-ui p-4 max-w-2xl w-full">
+        <h3 className="text-yellow-200 font-bold mb-3 text-lg border-b border-yellow-600 pb-2">Battle Log</h3>
+        <div className="max-h-40 overflow-y-auto space-y-1">
+          {log.map((line, i) => (
+            <div key={i} className="text-green-200 text-sm bg-black bg-opacity-30 p-2 rounded border-l-2 border-yellow-600">
+              {line}
+            </div>
+          ))}
+        </div>
+      </div>
+      {/* Battlefield Grid */}
+      <div className="battlefield-container relative">
+        {/* Decorative battlefield elements */}
+        <div className="absolute -top-4 -left-4 w-8 h-8 bg-yellow-600 rounded-full opacity-60"></div>
+        <div className="absolute -top-4 -right-4 w-6 h-6 bg-yellow-600 rounded-full opacity-60"></div>
+        <div className="absolute -bottom-4 -left-4 w-6 h-6 bg-yellow-600 rounded-full opacity-60"></div>
+        <div className="absolute -bottom-4 -right-4 w-8 h-8 bg-yellow-600 rounded-full opacity-60"></div>
+        
+        <div className="battlefield-grid grid grid-cols-8 grid-rows-8 gap-1 w-fit p-6 rounded-lg">
+          {[...Array(GRID_SIZE)].flatMap((_, y) =>
+            [...Array(GRID_SIZE)].map((_, x) => {
+              const u = getUnit(x, y);
+              const isSelected = u?.id === selectedId;
+              const key = `${x},${y}`;
+              const isMove = highlightMove.includes(key);
+              const isAttack = highlightAttack.includes(key);
+              const Icon = u?.Icon;
+              const percent = u ? (u.hp / u.maxHp) * 100 : 0;
+              const role = u?.role;
+              
+              // Determine cell type for visual variety
+              const isPath = (x === 3 || x === 4) && (y === 3 || y === 4); // Center paths
+              const cellClass = isPath ? "cobblestone-path" : "grass-cell";
+              
+              return (
+                <motion.div
+                  key={key}
+                  onClick={() => handleClick(x, y)}
+                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  className={`w-16 h-20 sm:w-20 sm:h-24 flex flex-col items-center justify-center text-xs sm:text-sm cursor-pointer transition-all duration-200 relative
+                  ${cellClass}
+                  ${isSelected ? "unit-selected" : ""}
+                  ${isMove ? "movement-highlight" : ""}
+                  ${isAttack ? "attack-highlight" : ""}
+                  ${u ? (u.team === "Romans" ? "unit-roman" : "unit-barbarian") : ""}`}
+                >
+                  {u ? (
+                    <>
+                      <div className="text-2xl mb-1 text-white drop-shadow-lg">{Icon && <Icon />}</div>
+                      
+                      {/* Health Bar */}
+                      <div className="w-full h-2 bg-gray-800 rounded-full border border-gray-600 mb-1">
+                        <div 
+                          className="health-bar rounded-full h-full" 
+                          style={{ width: `${percent}%` }}
+                        ></div>
+                      </div>
+                      
+                      {/* Unit Info */}
+                      <div className="text-xss text-white text-center drop-shadow-md">
+                        <div className="font-semibold">{u.hp} HP</div>
+                        <div className="text-xs opacity-80">{role}</div>
+                      </div>
+                      
+                      {/* Team indicator */}
+                      <div className={`absolute top-1 right-1 w-3 h-3 rounded-full border-2 border-white
+                        ${u.team === "Romans" ? "bg-blue-600" : "bg-red-600"}`}>
+                      </div>
+                    </>
+                  ) : (
+                    // Empty cell with subtle grass texture
+                    <div className="w-full h-full flex items-center justify-center">
+                      {isMove && <div className="text-blue-400 text-lg">⚡</div>}
+                      {isAttack && <div className="text-red-400 text-lg">⚔️</div>}
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })
+          )}
+        </div>
       </div>
   
    
