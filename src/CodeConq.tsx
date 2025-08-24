@@ -8,11 +8,7 @@ import { motion } from "framer-motion";
 const GRID_SIZE = 8;
 
 
-const getHpBarColor = (percent: number) => {
-  if (percent > 60) return "bg-green-500";
-  if (percent > 30) return "bg-yellow-400";
-  return "bg-red-500";
-};
+
 
 
 

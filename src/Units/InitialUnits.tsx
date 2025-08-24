@@ -2,15 +2,10 @@ import {
     GiSwordman,
     GiArcher,
     GiCavalry,
-    GiShield,
     GiCrossedSwords,
     GiHelmet,
-    GiSpears,
     GiBo,
     GiAce,
-    GiDaggers,
-    GiWorld,
-    GiShieldEchoes,
   } from "react-icons/gi";
   import { FaCrown } from "react-icons/fa";
   
