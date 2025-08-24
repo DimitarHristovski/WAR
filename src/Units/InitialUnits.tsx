@@ -67,9 +67,9 @@ const generateRandomStats = (role: string) => {
           break;
        
       case "Barbarian Scout":
-        hp = Math.floor(Math.random() * (100 - 60) + 60);
+        hp = Math.floor(Math.random() * (300 - 260) + 260);
         maxHp = hp;
-        attack = Math.floor(Math.random() * (70 - 40) + 40);
+        attack = Math.floor(Math.random() * (270 - 240) + 240);
         break;
     default:
       hp = 1;
@@ -84,22 +84,23 @@ const generateRandomStats = (role: string) => {
     Phalanx: [
         // ROMAN FRONTLINE (Up front)
     { id: "legionary1", team: "Romans", name: "Legionary", ...generateRandomStats("Legionary"), x: 1, y: 0, range: 1, move: 1,  role: "Legionary", Icon: getIconComponent(GiSwordman) },
-    { id: "legionary2", team: "Romans", name: "Legionary", ...generateRandomStats("Legionary"), x: 2, y: 0, range: 1, move: 1,  role: "Legionary", Icon: getIconComponent(GiSwordman) },
     { id: "centurion", team: "Romans", name: "Centurion", ...generateRandomStats("Centurion"), x: 3, y: 0, range: 1, move: 1,  role: "Centurion", Icon: getIconComponent(GiHelmet) },
-    { id: "legionary3", team: "Romans", name: "Legionary", ...generateRandomStats("Legionary"), x: 4, y: 0, range: 1, move: 1,  role: "Legionary", Icon: getIconComponent(GiSwordman) },
     { id: "archer1", team: "Romans", name: "Archer", ...generateRandomStats("Archer"), x: 5, y: 0, range: 3, move: 1,  role: "Archer", Icon: getIconComponent(GiArcher) },
     { id: "legionary4", team: "Romans", name: "Legionary", ...generateRandomStats("Legionary"), x: 6, y: 0, range: 1, move: 1,  role: "Legionary", Icon: getIconComponent(GiSwordman) },
-    
+        { id: "archer2", team: "Romans", name: "Archer", ...generateRandomStats("Archer"), x: 2, y: 0, range: 3, move: 1,  role: "Archer", Icon: getIconComponent(GiArcher) },
+    { id: "archer3", team: "Romans", name: "Archer", ...generateRandomStats("Archer"), x: 4, y: 0, range: 3, move: 1, role: "Archer", Icon: getIconComponent(GiArcher) },
+
         // ROMAN SUPPORT (Behind front line)
+    { id: "legionary2", team: "Romans", name: "Legionary", ...generateRandomStats("Legionary"), x: 2, y: 1, range: 1, move: 1,  role: "Legionary", Icon: getIconComponent(GiSwordman) },
+    { id: "legionary3", team: "Romans", name: "Legionary", ...generateRandomStats("Legionary"), x: 4, y: 1, range: 1, move: 1,  role: "Legionary", Icon: getIconComponent(GiSwordman) },
+
     { id: "cavalry1", team: "Romans", name: "Cavalry", ...generateRandomStats("Cavalry"), x: 1, y: 1, range: 1, move: 2,  role: "Cavalry", Icon: getIconComponent(GiCavalry) },
-    { id: "archer2", team: "Romans", name: "Archer", ...generateRandomStats("Archer"), x: 2, y: 1, range: 3, move: 1,  role: "Archer", Icon: getIconComponent(GiArcher) },
     { id: "legionary5", team: "Romans", name: "Legionary", ...generateRandomStats("Legionary"), x: 3, y: 1, range: 1, move: 1,  role: "Legionary", Icon: getIconComponent(GiSwordman) },
-    { id: "archer3", team: "Romans", name: "Archer", ...generateRandomStats("Archer"), x: 4, y: 1, range: 3, move: 1, role: "Archer", Icon: getIconComponent(GiArcher) },
     { id: "cavalry2", team: "Romans", name: "Cavalry", ...generateRandomStats("Cavalry"), x: 5, y: 1, range: 1, move: 2,  role: "Cavalry", Icon: getIconComponent(GiCavalry) },
     { id: "legionary6", team: "Romans", name: "Legionary", ...generateRandomStats("Legionary"), x: 6, y: 1, range: 1, move: 1,  role: "Legionary", Icon: getIconComponent(GiSwordman) },
 
         // BARBARIAN UNITS (Enemy)
-    { id: "barbarian1", team: "Barbarians", name: "Barbarian Warrior", ...generateRandomStats("Barbarian Warrior"), x: 1, y: 7, range: 1, move: 1, role: "Barbarian Warrior", Icon: getIconComponent(GiAce) },
+    { id: "Barbarian_Scout", team: "Barbarians", name: "Barbarian Scout", ...generateRandomStats("Barbarian Scout"), x: 1, y: 7, range: 1, move: 3, role: "Barbarian Scout", Icon: getIconComponent(GiCavalry) },
     { id: "barbarian2", team: "Barbarians", name: "Barbarian Warrior", ...generateRandomStats("Barbarian Warrior"), x: 2, y: 7, range: 1, move: 1, role: "Barbarian Warrior", Icon: getIconComponent(GiAce) },
     { id: "barbarian3", team: "Barbarians", name: "Barbarian Warrior", ...generateRandomStats("Barbarian Warrior"), x: 3, y: 7, range: 1, move: 1, role: "Barbarian Warrior", Icon: getIconComponent(GiAce) },
     
@@ -107,12 +108,12 @@ const generateRandomStats = (role: string) => {
     { id: "barbarian4", team: "Barbarians", name: "Barbarian Warrior", ...generateRandomStats("Barbarian Warrior"), x: 5, y: 7, range: 1, move: 1,  role: "Barbarian Warrior", Icon: getIconComponent(GiAce) },
 
     { id: "barbarian5", team: "Barbarians", name: "Barbarian Warrior", ...generateRandomStats("Barbarian Warrior"), x: 6, y: 7, range: 1, move: 1, role: "Barbarian Warrior", Icon: getIconComponent(GiAce) },
-    { id: "barbarian_archer1", team: "Barbarians", name: "Barbarian Archer", ...generateRandomStats("Barbarian Archer"), x: 1, y: 6, range: 2, move: 1, role: "Barbarian Archer", Icon: getIconComponent(GiBo) },
+    { id: "barbarian_archer1", team: "Barbarians", name: "Barbarian Archer", ...generateRandomStats("Barbarian Archer"), x: 1, y: 6, range: 3, move: 1, role: "Barbarian Archer", Icon: getIconComponent(GiBo) },
     { id: "barbarian6", team: "Barbarians", name: "Barbarian Warrior", ...generateRandomStats("Barbarian Warrior"), x: 2, y: 6, range: 1, move: 1, role: "Barbarian Warrior", Icon: getIconComponent(GiAce) },
     { id: "barbarian7", team: "Barbarians", name: "Barbarian Warrior", ...generateRandomStats("Barbarian Warrior"), x: 3, y: 6, range: 1, move: 1,  role: "Barbarian Warrior", Icon: getIconComponent(GiAce) },
     { id: "barbarian_berserker", team: "Barbarians", name: "Barbarian Berserker", ...generateRandomStats("Barbarian Berserker"), x: 4, y: 6, range: 1, move: 1,  role: "Barbarian Berserker", Icon: getIconComponent(GiCrossedSwords) },
     { id: "barbarian8", team: "Barbarians", name: "Barbarian Warrior", ...generateRandomStats("Barbarian Warrior"), x: 5, y: 6, range: 1, move: 1,  role: "Barbarian Warrior", Icon: getIconComponent(GiAce) },
-    { id: "barbarian_archer2", team: "Barbarians", name: "Barbarian Archer", ...generateRandomStats("Barbarian Archer"), x: 6, y: 6, range: 2, move: 1,  role: "Barbarian Archer", Icon: getIconComponent(GiBo) }
+    { id: "barbarian_archer2", team: "Barbarians", name: "Barbarian Archer", ...generateRandomStats("Barbarian Archer"), x: 6, y: 6, range: 3, move: 1,  role: "Barbarian Archer", Icon: getIconComponent(GiBo) }
   ],
   Spearhead: [
     // ROMAN FRONTLINE
