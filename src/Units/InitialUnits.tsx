@@ -46,12 +46,12 @@ const generateRandomStats = (role: string) => {
       break;
       // Barbarian Units
     case "Barbarian Warrior":
-      hp = Math.floor(Math.random() * (200 - 120) + 120);
+      hp = Math.floor(Math.random() * (300 - 200) + 200);
       maxHp = hp;
       attack = Math.floor(Math.random() * (100 - 60) + 60);
       break;
       case "Barbarian Archer":
-        hp = Math.floor(Math.random() * (180 - 140) + 140);
+        hp = Math.floor(Math.random() * (150 - 100) + 100);
         maxHp = hp;
         attack = Math.floor(Math.random() * (90 - 50) + 50);
         break;
