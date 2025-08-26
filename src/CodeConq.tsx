@@ -15,25 +15,45 @@ const GRID_SIZE = 8;
 
 function CodeConq() {
   const [currentFormation, setCurrentFormation] = useState<keyof typeof formations>("Phalanx");
-  const [units, setUnits] = useState(formations[currentFormation]);
+  const [units, setUnits] = useState(formations["Phalanx"]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [turn, setTurn] = useState("Romans");
   const [log, setLog] = useState<string[]>([]);
   const [round, setRound] = useState(1);
 
-  const getUnit = (x: number, y: number) => units.find((u) => u.x === x && u.y === y);
-  const getUnitById = (id: string | null) => units.find((u) => u.id === id);
+  // Update units when formation changes
+  useEffect(() => {
+    if (formations[currentFormation]) {
+      setUnits(formations[currentFormation]);
+      setSelectedId(null); // Reset selection when formation changes
+      setTurn("Romans"); // Reset turn when formation changes
+      setRound(1); // Reset round when formation changes
+      setLog([]); // Clear log when formation changes
+    }
+  }, [currentFormation]);
+
+  const getUnit = (x: number, y: number) => units?.find((u: any) => u.x === x && u.y === y);
+  const getUnitById = (id: string | null) => units?.find((u: any) => u.id === id);
   const isInRange = (a: any, b: any, range: number) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y) <= range;
   const selected = getUnitById(selectedId);
 
-  const highlightMove = selected ? [...Array(GRID_SIZE)].flatMap((_, y) =>
+  // Safety check - don't render if units is not properly initialized
+  if (!units || units.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-white text-xl">Loading formation...</div>
+      </div>
+    );
+  }
+
+  const highlightMove = selected && units ? [...Array(GRID_SIZE)].flatMap((_, y) =>
     [...Array(GRID_SIZE)].map((_, x) => {
       const distance = Math.abs(x - selected.x) + Math.abs(y - selected.y);
       return (distance <= selected.move && !getUnit(x, y)) ? `${x},${y}` : null;
     }).filter(Boolean)
   ) : [];
 
-  const highlightAttack = selected ? [...Array(GRID_SIZE)].flatMap((_, y) =>
+  const highlightAttack = selected && units ? [...Array(GRID_SIZE)].flatMap((_, y) =>
     [...Array(GRID_SIZE)].map((_, x) => {
       const target = getUnit(x, y);
       const distance = Math.abs(x - selected.x) + Math.abs(y - selected.y);
@@ -42,7 +62,7 @@ function CodeConq() {
   ) : [];
 
   const handleClick = (x: number, y: number) => {
-    if (turn !== "Romans") return; // Only allow moves during Roman turn
+    if (turn !== "Romans" || !units) return; // Only allow moves during Roman turn and when units exist
     
     const clicked = getUnit(x, y);
 
@@ -53,16 +73,16 @@ function CodeConq() {
         // Attack enemy
         const dmg = selected.attack;
         setUnits((prev) =>
-          prev.map((u) =>
+          prev.map((u: any) =>
             u.id === clicked.id ? { ...u, hp: u.hp - dmg } : u
-          ).filter((u) => u.hp > 0)
+          ).filter((u: any) => u.hp > 0)
         );
         setLog((prevLog) => [`${selected.name} attacked ${clicked.name} for ${dmg}`, ...prevLog]);
         setSelectedId(null);
         setTurn("Barbarians");
       } else if (!clicked && isInRange(selected, { x, y }, selected.move)) {
         // Move to empty space
-        setUnits((prev) => prev.map((u) => u.id === selected.id ? { ...u, x, y } : u));
+        setUnits((prev) => prev.map((u: any) => u.id === selected.id ? { ...u, x, y } : u));
         setSelectedId(null);
         setTurn("Barbarians");
       }
@@ -71,10 +91,10 @@ function CodeConq() {
 
   // Automatic movement for Barbarians (enemy AI) - one unit at a time
   useEffect(() => {
-    if (turn !== "Barbarians") return;
+    if (turn !== "Barbarians" || !units) return;
     const timeout = setTimeout(() => {
-      const enemies = units.filter((u) => u.team === "Barbarians");
-      const players = units.filter((u) => u.team === "Romans");
+      const enemies = units.filter((u: any) => u.team === "Barbarians");
+      const players = units.filter((u: any) => u.team === "Romans");
       
       if (enemies.length === 0 || players.length === 0) {
         setTurn("Romans");
@@ -134,7 +154,7 @@ function CodeConq() {
         }
       }
       
-      setUnits([...units].filter((u) => u.hp > 0));
+      setUnits([...units].filter((u: any) => u.hp > 0));
       setTurn("Romans");
       setRound((r) => r + 1);
     }, 1000);
@@ -144,14 +164,17 @@ function CodeConq() {
 
 
   const checkEnd = () => {
-    const romansLeft = units.some((u) => u.team === "Romans");
-    const barbariansLeft = units.some((u) => u.team === "Barbarians");
+    if (!units || units.length === 0) return null;
+    const romansLeft = units.some((u: any) => u.team === "Romans");
+    const barbariansLeft = units.some((u: any) => u.team === "Barbarians");
     if (!romansLeft) return "Game Over - Barbarians Win!";
     if (!barbariansLeft) return "Victory - Romans Win!";
     return null;
   };
 
   const restartGame = () => {
+    if (!formations || Object.keys(formations).length === 0) return;
+    
     const formationKeys = Object.keys(formations) as Array<keyof typeof formations>;
     const currentIndex = formationKeys.indexOf(currentFormation);
     const nextFormation = formationKeys[(currentIndex + 1) % formationKeys.length];
@@ -164,13 +187,7 @@ function CodeConq() {
     
     // Update formation and units in sequence
     setCurrentFormation(nextFormation);
-    setUnits(formations[nextFormation]);
   };
-
-  // Add useEffect to handle formation changes
-  useEffect(() => {
-    setUnits(formations[currentFormation]);
-  }, [currentFormation]);
 
   return (
     <div className="flex flex-col items-center p-4 sm:p-6 space-y-6 bg-gradient-to-br from-green-800 via-green-700 to-green-900 min-h-screen">
@@ -187,7 +204,7 @@ function CodeConq() {
           onClick={restartGame}
           className="battle-button px-6 py-3 text-lg font-semibold"
         >
-          🔄 Switch to {Object.keys(formations)[(Object.keys(formations).indexOf(currentFormation) + 1) % Object.keys(formations).length]} Formation
+          🔄 Switch to {formations && Object.keys(formations).length > 0 ? Object.keys(formations)[(Object.keys(formations).indexOf(currentFormation) + 1) % Object.keys(formations).length] : "Next"} Formation
         </button>
         
         {turn === "Romans" && (
@@ -221,7 +238,7 @@ function CodeConq() {
         <div className="game-ui p-4 xl:w-80 flex-shrink-0">
           <h3 className="text-yellow-200 font-bold mb-3 text-lg border-b border-yellow-600 pb-2">Battle Log</h3>
           <div className="max-h-96 overflow-y-auto space-y-1">
-            {log.map((line, i) => (
+            {log && log.map((line, i) => (
               <div key={i} className="text-green-200 text-sm bg-black bg-opacity-30 p-2 rounded border-l-2 border-yellow-600">
                 {line}
               </div>
@@ -243,8 +260,8 @@ function CodeConq() {
                 const u = getUnit(x, y);
                 const isSelected = u?.id === selectedId;
                 const key = `${x},${y}`;
-                const isMove = highlightMove.includes(key);
-                const isAttack = highlightAttack.includes(key);
+                const isMove = highlightMove && highlightMove.includes(key);
+                const isAttack = highlightAttack && highlightAttack.includes(key);
                 const Icon = u?.Icon;
                 const percent = u ? (u.hp / u.maxHp) * 100 : 0;
                 const role = u?.role;
