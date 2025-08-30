@@ -9,6 +9,7 @@ const GRID_SIZE = 8;
 // Available troop types for custom setup - using existing definitions
 const AVAILABLE_TROOPS = {
   Romans: [
+    { role: "Roman King", name: "Roman King", Icon: "👑" },
     { role: "Legionary", name: "Legionary", Icon: "⚔️" },
     { role: "Centurion", name: "Centurion", Icon: "🪖" },
     { role: "Archer", name: "Archer", Icon: "🏹" },
@@ -45,7 +46,8 @@ const AVAILABLE_TROOPS = {
     { role: "Greek Catapult", name: "Greek Catapult", Icon: "⚔️" },
     { role: "Polybolos", name: "Polybolos", Icon: "⚔️" },
     { role: "Agema", name: "Agema", Icon: "⚔️" },
-    { role: "Greek Standard Bearer", name: "Greek Standard Bearer", Icon: "🪖" }
+    { role: "Greek Standard Bearer", name: "Greek Standard Bearer", Icon: "🪖" },
+    { role: "Macedonian King", name: "Macedonian King", Icon: "👑" }
   ]
 };
 
@@ -55,19 +57,27 @@ const generateCustomTroopStats = (role: string) => {
 
   switch (role) {
     // Roman Units
-    case "Legionary":
-      hp = Math.floor(Math.random() * (300 - 200) + 200);
+    case "Roman King":
+      hp = Math.floor(Math.random() * (440 - 400) + 400);
       maxHp = hp;
-      attack = Math.floor(Math.random() * (150 - 100) + 100);
-      ammo = 0;
+      attack = Math.floor(Math.random() * (310 - 280) + 280);
+      ammo = 0; // Melee unit
       range = 1;
       move = 1;
       break;
+      case "Legionary":
+        hp = Math.floor(Math.random() * (300 - 200) + 200);
+        maxHp = hp;
+        attack = Math.floor(Math.random() * (150 - 100) + 100);
+        ammo = 0; // Melee unit
+        range = 1;
+        move = 1;
+        break;
     case "Centurion":
       hp = Math.floor(Math.random() * (400 - 300) + 300);
       maxHp = hp;
       attack = Math.floor(Math.random() * (200 - 150) + 150);
-      ammo = 0;
+      ammo = 0; // Melee unit
       range = 1;
       move = 1;
       break;
@@ -75,7 +85,7 @@ const generateCustomTroopStats = (role: string) => {
       hp = Math.floor(Math.random() * (200 - 100) + 100);
       maxHp = hp;
       attack = Math.floor(Math.random() * (100 - 50) + 50);
-      ammo = 10;
+      ammo = 10; // Ranged unit with 10 shots
       range = 3;
       move = 1;
       break;
@@ -83,7 +93,7 @@ const generateCustomTroopStats = (role: string) => {
       hp = Math.floor(Math.random() * (250 - 200) + 200);
       maxHp = hp;
       attack = Math.floor(Math.random() * (150 - 100) + 100);
-      ammo = 0;
+      ammo = 0; // Melee unit
       range = 1;
       move = 3;
       break;
@@ -91,7 +101,7 @@ const generateCustomTroopStats = (role: string) => {
       hp = Math.floor(Math.random() * (500 - 400) + 400);
       maxHp = hp;
       attack = Math.floor(Math.random() * (250 - 200) + 200);
-      ammo = 0;
+      ammo = 0; // Melee unit
       range = 1;
       move = 1;
       break;
@@ -99,7 +109,7 @@ const generateCustomTroopStats = (role: string) => {
       hp = Math.floor(Math.random() * (50 - 10) + 10);
       maxHp = hp;
       attack = Math.floor(Math.random() * (100 - 50) + 50);
-      ammo = 10;
+      ammo = 10; // Ranged unit with 10 shots
       range = 6;
       move = 0;
       break;
@@ -107,7 +117,7 @@ const generateCustomTroopStats = (role: string) => {
       hp = Math.floor(Math.random() * (20 - 10) + 10);
       maxHp = hp;
       attack = Math.floor(Math.random() * (80 - 30) + 30);
-      ammo = 10;
+      ammo = 10; // Ranged unit with 10 shots
       range = 3;
       move = 1;
       break;
@@ -115,7 +125,7 @@ const generateCustomTroopStats = (role: string) => {
       hp = Math.floor(Math.random() * (180 - 130) + 130);
       maxHp = hp;
       attack = Math.floor(Math.random() * (120 - 80) + 80);
-      ammo = 0;
+      ammo = 0; // Melee unit
       range = 1;
       move = 1;
       break;
@@ -123,7 +133,7 @@ const generateCustomTroopStats = (role: string) => {
       hp = Math.floor(Math.random() * (100 - 60) + 60);
       maxHp = hp;
       attack = Math.floor(Math.random() * (80 - 40) + 40);
-      ammo = 10;
+      ammo = 10; // Ranged unit with 10 shots
       range = 3;
       move = 1;
       break;
@@ -131,196 +141,219 @@ const generateCustomTroopStats = (role: string) => {
       hp = Math.floor(Math.random() * (350 - 250) + 250);
       maxHp = hp;
       attack = Math.floor(Math.random() * (180 - 130) + 130);
-      ammo = 0;
+      ammo = 0; // Melee unit
       range = 1;
       move = 1;
       break;
-    // Barbarian Units
+      // Barbarian Units
     case "Barbarian Warrior":
-      hp = Math.floor(Math.random() * (300 - 200) + 200);
+      hp = Math.floor(Math.random() * (300 - 270) + 270);
       maxHp = hp;
       attack = Math.floor(Math.random() * (150 - 100) + 100);
-      ammo = 0;
+      ammo = 0; // Melee unit
       range = 1;
       move = 1;
       break;
-    case "Barbarian Archer":
-      hp = Math.floor(Math.random() * (150 - 100) + 100);
-      maxHp = hp;
-      attack = Math.floor(Math.random() * (100 - 50) + 50);
-      ammo = 10;
-      range = 3;
-      move = 1;
-      break;
-    case "Barbarian Chief":
-      hp = Math.floor(Math.random() * (550 - 350) + 350);
-      maxHp = hp;
-      attack = Math.floor(Math.random() * (250 - 200) + 200);
-      ammo = 0;
-      range = 1;
-      move = 1;
-      break;
-    case "Barbarian Berserker":
-      hp = Math.floor(Math.random() * (350 - 300) + 300);
-      maxHp = hp;
-      attack = Math.floor(Math.random() * (250 - 200) + 200);
-      ammo = 0;
-      range = 1;
-      move = 2;
-      break;
-    case "Barbarian Scout":
-      hp = Math.floor(Math.random() * (300 - 250) + 250);
-      maxHp = hp;
-      attack = Math.floor(Math.random() * (250 - 200) + 200);
-      ammo = 0;
-      range = 1;
-      move = 3;
-      break;
-    case "Barbarian Shaman":
-      hp = Math.floor(Math.random() * (200 - 150) + 150);
-      maxHp = hp;
-      attack = Math.floor(Math.random() * (180 - 130) + 130);
-      ammo = 10;
-      range = 3;
-      move = 1;
-      break;
-    case "Barbarian Axeman":
-      hp = Math.floor(Math.random() * (400 - 300) + 300);
-      maxHp = hp;
-      attack = Math.floor(Math.random() * (200 - 150) + 150);
-      ammo = 0;
-      range = 1;
-      move = 1;
-      break;
-    case "Barbarian Spearman":
-      hp = Math.floor(Math.random() * (250 - 200) + 200);
-      maxHp = hp;
-      attack = Math.floor(Math.random() * (120 - 80) + 80);
-      ammo = 0;
-      range = 1;
-      move = 1;
-      break;
-    case "Barbarian Raider":
-      hp = Math.floor(Math.random() * (180 - 130) + 130);
-      maxHp = hp;
-      attack = Math.floor(Math.random() * (160 - 110) + 110);
-      ammo = 0;
-      range = 1;
-      move = 2;
-      break;
-    case "Barbarian Warlord":
-      hp = Math.floor(Math.random() * (600 - 450) + 450);
-      maxHp = hp;
-      attack = Math.floor(Math.random() * (300 - 250) + 250);
-      ammo = 0;
-      range = 1;
-      move = 1;
-      break;
-    // Greek Units
-    case "Hoplite":
-      hp = Math.floor(Math.random() * (320 - 240) + 240);
-      maxHp = hp;
-      attack = Math.floor(Math.random() * (150 - 110) + 110);
-      ammo = 0;
-      range = 1;
-      move = 1;
-      break;
-    case "Phalangite":
-      hp = Math.floor(Math.random() * (360 - 280) + 280);
-      maxHp = hp;
-      attack = Math.floor(Math.random() * (170 - 130) + 130);
-      ammo = 0;
-      range = 2;
-      move = 1;
-      break;
-    case "Hypaspist":
-      hp = Math.floor(Math.random() * (340 - 260) + 260);
-      maxHp = hp;
-      attack = Math.floor(Math.random() * (200 - 150) + 150);
-      ammo = 0;
-      range = 1;
-      move = 2;
-      break;
-    case "Companion Cavalry":
-      hp = Math.floor(Math.random() * (300 - 240) + 240);
-      maxHp = hp;
-      attack = Math.floor(Math.random() * (230 - 180) + 180);
-      ammo = 0;
-      range = 1;
-      move = 3;
-      break;
-    case "Thessalian Cavalry":
-      hp = Math.floor(Math.random() * (280 - 220) + 220);
-      maxHp = hp;
-      attack = Math.floor(Math.random() * (200 - 150) + 150);
-      ammo = 0;
-      range = 1;
-      move = 3;
-      break;
-    case "Peltast":
-      hp = Math.floor(Math.random() * (180 - 120) + 120);
-      maxHp = hp;
-      attack = Math.floor(Math.random() * (110 - 70) + 70);
-      ammo = 12;
-      range = 2;
-      move = 2;
-      break;
-    case "Thureophoroi":
-      hp = Math.floor(Math.random() * (220 - 160) + 160);
-      maxHp = hp;
-      attack = Math.floor(Math.random() * (140 - 100) + 100);
-      ammo = 6;
-      range = 2;
-      move = 2;
-      break;
-    case "Cretan Archer":
-      hp = Math.floor(Math.random() * (170 - 120) + 120);
-      maxHp = hp;
-      attack = Math.floor(Math.random() * (130 - 90) + 90);
-      ammo = 12;
-      range = 4;
-      move = 1;
-      break;
-    case "Rhodian Slinger":
-      hp = Math.floor(Math.random() * (160 - 110) + 110);
-      maxHp = hp;
-      attack = Math.floor(Math.random() * (120 - 80) + 80);
-      ammo = 14;
-      range = 4;
-      move = 1;
-      break;
-    case "Greek Catapult":
-      hp = Math.floor(Math.random() * (60 - 30) + 30);
-      maxHp = hp;
-      attack = Math.floor(Math.random() * (160 - 110) + 110);
-      ammo = 8;
-      range = 6;
-      move = 0;
-      break;
-    case "Polybolos":
-      hp = Math.floor(Math.random() * (70 - 40) + 40);
-      maxHp = hp;
-      attack = Math.floor(Math.random() * (140 - 90) + 90);
-      ammo = 16;
-      range = 5;
-      move = 0;
-      break;
-    case "Agema":
-      hp = Math.floor(Math.random() * (380 - 300) + 300);
-      maxHp = hp;
-      attack = Math.floor(Math.random() * (220 - 170) + 170);
-      ammo = 0;
-      range = 1;
-      move = 2;
-      break;
-    case "Greek Standard Bearer":
-      hp = Math.floor(Math.random() * (240 - 200) + 200);
-      maxHp = hp;
-      attack = Math.floor(Math.random() * (110 - 80) + 80);
-      ammo = 0;
-      range = 1;
-      move = 1;
-      break;
+      case "Barbarian Archer":
+        hp = Math.floor(Math.random() * (150 - 100) + 100);
+        maxHp = hp;
+        attack = Math.floor(Math.random() * (100 - 50) + 50);
+        ammo = 10; // Ranged unit with 10 shots
+        range = 3;
+        move = 1;
+        break;
+      case "Barbarian Chief":
+        hp = Math.floor(Math.random() * (440 - 400) + 400);
+        maxHp = hp;
+        attack = Math.floor(Math.random() * (310 - 280) + 280);
+        ammo = 0; // Melee unit
+        range = 1;
+        move = 1;
+        break;
+        case "Barbarian Berserker":
+          hp = Math.floor(Math.random() * (350 - 300) + 300);
+          maxHp = hp;
+          attack = Math.floor(Math.random() * (250 - 200) + 200);
+          ammo = 0; // Melee unit
+          range = 1;
+          move = 2;
+          break;
+       
+      case "Barbarian Scout":
+        hp = Math.floor(Math.random() * (300 - 250) + 250);
+        maxHp = hp;
+        attack = Math.floor(Math.random() * (250 - 200) + 200);
+        ammo = 5; // Melee unit
+        range = 3;
+        move = 3;
+        break;
+      case "Barbarian Shaman":
+        hp = Math.floor(Math.random() * (200 - 150) + 150);
+        maxHp = hp;
+        attack = Math.floor(Math.random() * (180 - 130) + 130);
+        ammo = 10; // Ranged unit with 10 shots
+        range = 3;
+        move = 1;
+        break;
+      case "Barbarian Axeman":
+        hp = Math.floor(Math.random() * (400 - 300) + 300);
+        maxHp = hp;
+        attack = Math.floor(Math.random() * (200 - 150) + 150);
+        ammo = 0; // Melee unit
+        range = 1;
+        move = 1;
+        break;
+      case "Barbarian Spearman":
+        hp = Math.floor(Math.random() * (250 - 200) + 200);
+        maxHp = hp;
+        attack = Math.floor(Math.random() * (120 - 80) + 80);
+        ammo = 0; // Melee unit
+        range = 1;
+        move = 1;
+        break;
+      case "Barbarian Raider":
+        hp = Math.floor(Math.random() * (180 - 130) + 130);
+        maxHp = hp;
+        attack = Math.floor(Math.random() * (160 - 110) + 110);
+        ammo = 0; // Melee unit
+        range = 1;
+        move = 2;
+        break;
+      case "Barbarian Warlord":
+        hp = Math.floor(Math.random() * (600 - 450) + 450);
+        maxHp = hp;
+        attack = Math.floor(Math.random() * (300 - 250) + 250);
+        ammo = 0; // Melee unit
+        range = 1;
+        move = 1;
+        break;
+        // === Greek / Macedonian Units ===
+case "Hoplite":
+  hp = Math.floor(Math.random() * (320 - 240) + 240);
+  maxHp = hp;
+  attack = Math.floor(Math.random() * (150 - 110) + 110);
+  ammo = 0;        // spear + shield wall
+  range = 1;
+  move = 1;
+  break;
+
+case "Phalangite": // sarissa phalanx
+  hp = Math.floor(Math.random() * (360 - 280) + 280);
+  maxHp = hp;
+  attack = Math.floor(Math.random() * (170 - 130) + 130);
+  ammo = 0;
+  range = 2;       // long reach of sarissa
+  move = 1;        // slow formation
+  break;
+
+case "Hypaspist":
+  hp = Math.floor(Math.random() * (340 - 260) + 260);
+  maxHp = hp;
+  attack = Math.floor(Math.random() * (200 - 150) + 150);
+  ammo = 0;        // elite guard, flexible
+  range = 1;
+  move = 2;        // quicker than phalanx
+  break;
+
+case "Companion Cavalry":
+  hp = Math.floor(Math.random() * (300 - 240) + 240);
+  maxHp = hp;
+  attack = Math.floor(Math.random() * (230 - 180) + 180);
+  ammo = 0;        // shock cavalry
+  range = 1;
+  move = 3;
+  break;
+
+case "Thessalian Cavalry":
+  hp = Math.floor(Math.random() * (280 - 220) + 220);
+  maxHp = hp;
+  attack = Math.floor(Math.random() * (200 - 150) + 150);
+  ammo = 0;
+  range = 1;
+  move = 3;
+  break;
+
+case "Peltast":
+  hp = Math.floor(Math.random() * (180 - 120) + 120);
+  maxHp = hp;
+  attack = Math.floor(Math.random() * (110 - 70) + 70);
+  ammo = 12;       // javelins
+  range = 2;
+  move = 2;
+  break;
+
+case "Thureophoroi":
+  hp = Math.floor(Math.random() * (220 - 160) + 160);
+  maxHp = hp;
+  attack = Math.floor(Math.random() * (140 - 100) + 100);
+  ammo = 6;        // mixed javelin + spear
+  range = 2;
+  move = 2;
+  break;
+
+case "Cretan Archer":
+  hp = Math.floor(Math.random() * (170 - 120) + 120);
+  maxHp = hp;
+  attack = Math.floor(Math.random() * (130 - 90) + 90);
+  ammo = 12;       // elite archers
+  range = 4;
+  move = 1;
+  break;
+
+case "Rhodian Slinger":
+  hp = Math.floor(Math.random() * (160 - 110) + 110);
+  maxHp = hp;
+  attack = Math.floor(Math.random() * (120 - 80) + 80);
+  ammo = 14;       // high ammo, long arc
+  range = 4;
+  move = 1;
+  break;
+
+case "Greek Catapult":
+  hp = Math.floor(Math.random() * (60 - 30) + 30);
+  maxHp = hp;
+  attack = Math.floor(Math.random() * (160 - 110) + 110);
+  ammo = 8;        // heavy stones/bolts
+  range = 6;
+  move = 0;        // static
+  break;
+
+case "Polybolos":
+  hp = Math.floor(Math.random() * (70 - 40) + 40);
+  maxHp = hp;
+  attack = Math.floor(Math.random() * (140 - 90) + 90);
+  ammo = 16;       // repeating ballista
+  range = 5;
+  move = 0;
+  break;
+
+case "Agema":
+  hp = Math.floor(Math.random() * (380 - 300) + 300);
+  maxHp = hp;
+  attack = Math.floor(Math.random() * (220 - 170) + 170);
+  ammo = 0;        // elite assault infantry
+  range = 1;
+  move = 2;
+  break;
+
+case "Greek Standard Bearer":
+  hp = Math.floor(Math.random() * (240 - 200) + 200);
+  maxHp = hp;
+  attack = Math.floor(Math.random() * (110 - 80) + 80);
+  ammo = 0;
+  range = 1;
+  move = 1;
+  break;
+
+  case "Macedonian King":
+  hp = Math.floor(Math.random() * (440 - 400) + 400);
+  maxHp = hp;
+  attack = Math.floor(Math.random() * (310 - 280) + 280);
+  ammo = 0;
+  range = 1;
+  move = 1;
+  break;
+
     default:
       hp = 1;
       maxHp = 1;
