@@ -3,7 +3,6 @@
 
 import { useState, useEffect } from "react";
 import { formations } from "./Units/InitialUnits";
-import { motion } from "framer-motion";
 
 const GRID_SIZE = 8;
 
@@ -360,6 +359,9 @@ function CodeConq() {
   const [selectedTeam, setSelectedTeam] = useState<"Romans" | "Barbarians" | "Greeks">("Romans");
   const [draggedTroop, setDraggedTroop] = useState<any>(null);
   const [gameStarted, setGameStarted] = useState(false);
+  const [mergeMode, setMergeMode] = useState(false);
+  const [mergeCount, setMergeCount] = useState(0);
+  const [selectedForMerge, setSelectedForMerge] = useState<any>(null);
 
   // Update units when formation changes
   useEffect(() => {
@@ -369,7 +371,10 @@ function CodeConq() {
       setTurn("Romans");
       setRound(1);
       setLog([]);
-      setGameStarted(false);
+      setGameStarted(true); // Enable merging immediately in formation mode
+      setIsSetupMode(false);
+      setCustomUnits([]);
+      setMergeCount(0); // Reset merge count for new formation
     }
   }, [currentFormation]);
 
@@ -421,7 +426,69 @@ function CodeConq() {
     const clicked = getUnit(x, y);
 
     if (clicked && clicked.team === "Romans") {
-      setSelectedId(clicked.id);
+      if (mergeMode) {
+        // In merge mode, select first troop for merging
+        if (!selectedForMerge) {
+          setSelectedForMerge(clicked);
+          setLog((prevLog) => [`Selected ${clicked.name} for merging. Click on another ${clicked.role} to merge.`, ...prevLog]);
+        } else if (selectedForMerge.id !== clicked.id && selectedForMerge.role === clicked.role) {
+          // Check if troops are adjacent
+          if (!areAdjacent(selectedForMerge, clicked)) {
+            setLog((prevLog) => [`Troops must be adjacent to merge! Move them next to each other first.`, ...prevLog]);
+            setSelectedForMerge(null);
+            setMergeMode(false);
+            setSelectedId(null);
+            return;
+          }
+          
+          // Second troop selected, perform merge
+          if (mergeCount < 3) {
+            const mergedTroop = {
+              ...selectedForMerge,
+              hp: Math.min(selectedForMerge.hp + clicked.hp, selectedForMerge.maxHp + clicked.maxHp),
+              maxHp: selectedForMerge.maxHp + clicked.maxHp,
+              attack: Math.floor((selectedForMerge.attack + clicked.attack) * 1),
+              range: Math.max(selectedForMerge.range, clicked.range),
+              move: Math.max(selectedForMerge.move, clicked.move),
+              ammo: Math.max(selectedForMerge.ammo || 0, clicked.ammo || 0),
+              id: `merged_${selectedForMerge.role}_${Date.now()}`,
+              name: `Elite ${selectedForMerge.role}`
+            };
+            
+            // Remove both original troops and add merged troop
+            setUnits((prev) => {
+              const filtered = prev.filter((u: any) => u.id !== selectedForMerge.id && u.id !== clicked.id);
+              return [...filtered, mergedTroop];
+            });
+            
+            setMergeCount(prev => prev + 1);
+            setLog((prevLog) => [`Merged ${selectedForMerge.name} and ${clicked.name} into Elite ${mergedTroop.role}! (${3 - mergeCount - 1} merges remaining)`, ...prevLog]);
+            
+            // Reset merge state
+            setSelectedForMerge(null);
+            setMergeMode(false);
+            setSelectedId(null);
+          } else {
+            setLog((prevLog) => [`No more merges allowed this game!`, ...prevLog]);
+            setSelectedForMerge(null);
+            setMergeMode(false);
+            setSelectedId(null);
+          }
+        } else if (selectedForMerge.role !== clicked.role) {
+          setLog((prevLog) => [`Can only merge troops of the same role! Selected: ${selectedForMerge.role}, Clicked: ${clicked.role}`, ...prevLog]);
+          setSelectedForMerge(null);
+          setMergeMode(false);
+          setSelectedId(null);
+        } else {
+          setLog((prevLog) => [`Cannot merge the same troop with itself!`, ...prevLog]);
+          setSelectedForMerge(null);
+          setMergeMode(false);
+          setSelectedId(null);
+        }
+      } else {
+        // Normal selection mode
+        setSelectedId(clicked.id);
+      }
     } else if (selected) {
       if (clicked && (clicked.team === "Barbarians" || clicked.team === "Greeks") && isInRange(selected, clicked, selected.range)) {
         // Check if target is alive
@@ -503,23 +570,88 @@ function CodeConq() {
 
   const handleDrop = (e: React.DragEvent, x: number, y: number) => {
     e.preventDefault();
-    if (draggedTroop && !getUnit(x, y)) {
-      // Check team limits
-      const teamCount = customUnits.filter(u => u.team === selectedTeam).length;
-      if (teamCount < 16) {
-        const stats = generateCustomTroopStats(draggedTroop.role);
-        const newTroop = {
-          ...draggedTroop,
-          ...stats,
-          id: `${selectedTeam}_${draggedTroop.role}_${Date.now()}`,
-          team: selectedTeam,
-          x,
-          y,
-          Icon: draggedTroop.Icon
-        };
-        
-        setCustomUnits(prev => [...prev, newTroop]);
-        setDraggedTroop(null);
+    if (draggedTroop) {
+      // Check if position is valid (not occupied)
+      if (!getUnit(x, y)) {
+        // Check team limits
+        const teamCount = customUnits.filter(u => u.team === selectedTeam).length;
+        if (teamCount < 16) {
+          const stats = generateCustomTroopStats(draggedTroop.role);
+          const newTroop = {
+            ...draggedTroop,
+            ...stats,
+            id: `${selectedTeam}_${draggedTroop.role}_${Date.now()}`,
+            team: selectedTeam,
+            x,
+            y,
+            Icon: draggedTroop.Icon
+          };
+          
+          setCustomUnits(prev => [...prev, newTroop]);
+          setDraggedTroop(null);
+        }
+      }
+    } else if (isSetupMode) {
+      // Handle troop removal in setup mode
+      const existingUnit = getUnit(x, y);
+      if (existingUnit) {
+        setCustomUnits(prev => prev.filter(u => u.id !== existingUnit.id));
+      }
+    } else if (!isSetupMode && mergeMode) {
+      // Handle troop merging only in formation mode
+      const existingUnit = getUnit(x, y);
+      const draggedUnit = units?.find(u => u.id === selectedId);
+      
+      if (draggedUnit && (draggedUnit.team === "Romans" || draggedUnit.team === "Barbarians" || draggedUnit.team === "Greeks")) {
+        if (!existingUnit) {
+          // Select first troop for merging
+          setSelectedForMerge(draggedUnit);
+          setLog((prevLog) => [`Selected ${draggedUnit.name} for merging. Now drag another ${draggedUnit.role} onto it to merge.`, ...prevLog]);
+        } else if (existingUnit.team === draggedUnit.team && existingUnit.role === draggedUnit.role && existingUnit.id !== draggedUnit.id) {
+          // Check if troops are adjacent
+          const dx = Math.abs(draggedUnit.x - existingUnit.x);
+          const dy = Math.abs(draggedUnit.y - existingUnit.y);
+          const isAdjacent = (dx === 1 && dy === 0) || (dx === 0 && dy === 1);
+          
+          if (isAdjacent && mergeCount < 2) {
+            const mergedTroop = {
+              ...draggedUnit,
+              hp: Math.min(draggedUnit.hp + existingUnit.hp, draggedUnit.maxHp + existingUnit.maxHp),
+              maxHp: draggedUnit.maxHp + existingUnit.maxHp,
+              attack: Math.floor((draggedUnit.attack + existingUnit.attack) * 1.2),
+              range: Math.max(draggedUnit.range, existingUnit.range),
+              move: Math.max(draggedUnit.move, existingUnit.move),
+              ammo: Math.max(draggedUnit.ammo || 0, existingUnit.ammo || 0),
+              id: `merged_${draggedUnit.role}_${Date.now()}`,
+              name: `Elite ${draggedUnit.role}`,
+              x,
+              y
+            };
+            
+            // Remove both original troops and add merged troop
+            setUnits((prev) => {
+              const filtered = prev.filter((u: any) => u.id !== draggedUnit.id && u.id !== existingUnit.id);
+              return [...filtered, mergedTroop];
+            });
+            
+            setMergeCount(prev => prev + 1);
+            setLog((prevLog) => [`Merged ${draggedUnit.name} and ${existingUnit.name} into Elite ${draggedUnit.role}! (${2 - mergeCount - 1} merges remaining)`, ...prevLog]);
+            
+            setSelectedId(null);
+            setSelectedForMerge(null);
+            setMergeMode(false);
+          } else if (!isAdjacent) {
+            setLog((prevLog) => [`Troops must be adjacent to merge!`, ...prevLog]);
+          } else {
+            setLog((prevLog) => [`No more merges allowed this game!`, ...prevLog]);
+          }
+        } else if (existingUnit.team === draggedUnit.team && existingUnit.role === draggedUnit.role && existingUnit.id === draggedUnit.id) {
+          setLog((prevLog) => [`Cannot merge a troop with itself!`, ...prevLog]);
+        } else if (existingUnit.team === draggedUnit.team && existingUnit.role !== draggedUnit.role) {
+          setLog((prevLog) => [`Can only merge troops of the same role!`, ...prevLog]);
+        } else if (existingUnit.team !== draggedUnit.team) {
+          setLog((prevLog) => [`Cannot merge with enemy troops!`, ...prevLog]);
+        }
       }
     }
   };
@@ -530,10 +662,7 @@ function CodeConq() {
     setIsSetupMode(false);
     setUnits(customUnits);
     setGameStarted(true);
-    setSelectedId(null);
-    setTurn("Romans");
-    setRound(1);
-    setLog([]);
+    setMergeCount(0); // Reset merge count for new game
   };
 
   const resetCustomSetup = () => {
@@ -544,6 +673,13 @@ function CodeConq() {
 
   const getTeamCount = (team: string) => {
     return customUnits.filter(u => u.team === team).length;
+  };
+
+  // Check if two troops are adjacent
+  const areAdjacent = (troop1: any, troop2: any) => {
+    const dx = Math.abs(troop1.x - troop2.x);
+    const dy = Math.abs(troop1.y - troop2.y);
+    return (dx === 1 && dy === 0) || (dx === 0 && dy === 1);
   };
 
   // Automatic movement for AI teams (Barbarians and Greeks) - one unit at a time
@@ -671,49 +807,62 @@ function CodeConq() {
     const barbariansLeft = currentUnits.some((u: any) => u.team === "Barbarians");
     const greeksLeft = currentUnits.some((u: any) => u.team === "Greeks");
     
-    if (!romansLeft && !greeksLeft) return "Game Over - Barbarians Win!";
-    if (!barbariansLeft) return "Victory - Romans & Greeks Win!";
+    // Check for team elimination
+    if (!romansLeft && !barbariansLeft && !greeksLeft) return "Game Over - All teams eliminated!";
+    if (!romansLeft && !barbariansLeft) return "Victory - Greeks Win!";
+    if (!romansLeft && !greeksLeft) return "Victory - Barbarians Win!";
+    if (!barbariansLeft && !greeksLeft) return "Victory - Romans Win!";
+    
+    // Check for single team victory (only one team left)
+    if (romansLeft && !barbariansLeft && !greeksLeft) return "Victory - Romans Win!";
+    if (barbariansLeft && !romansLeft && !greeksLeft) return "Victory - Barbarians Win!";
+    if (greeksLeft && !romansLeft && !barbariansLeft) return "Victory - Greeks Win!";
+    
     return null;
-  };
-
-  const restartGame = () => {
-    if (!formations || Object.keys(formations).length === 0) return;
-    
-    const formationKeys = Object.keys(formations) as Array<keyof typeof formations>;
-    const currentIndex = formationKeys.indexOf(currentFormation);
-    const nextFormation = formationKeys[(currentIndex + 1) % formationKeys.length];
-    
-    // Reset all game state
-    setSelectedId(null);
-    setTurn("Romans");
-    setLog([]);
-    setRound(1);
-    setGameStarted(false);
-    setIsSetupMode(false);
-    setCustomUnits([]);
-    
-    // Update formation and units in sequence
-    setCurrentFormation(nextFormation);
   };
 
   return (
     <div className="flex flex-col items-center p-4 sm:p-6 space-y-6 bg-gradient-to-br from-green-800 via-green-700 to-green-900 min-h-screen">
       {/* Game Header */}
-      <div className="game-ui p-6 text-center">
+      <div className="game-ui p-6 text-center relative">
+        {/* Decorative SVG elements */}
+        <svg className="absolute top-2 left-4 w-12 h-12 text-yellow-400 opacity-60" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 2L2 7v10c0 5.55 3.84 9.74 9 11 5.16-1.26 9-5.45 9-11V7l-10-5z"/>
+        </svg>
+        <svg className="absolute top-2 right-4 w-12 h-12 text-yellow-400 opacity-60" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 2L2 7v10c0 5.55 3.84 9.74 9 11 5.16-1.26 9-5.45 9-11V7l-10-5z"/>
+        </svg>
+        
         <h1 className="text-4xl font-bold text-yellow-200 mb-2 drop-shadow-lg">Romans vs Barbarians</h1>
         <p className="text-yellow-100 text-lg">Player vs AI Battle</p>
         <p className="text-green-200 text-sm mt-2">
           {isSetupMode ? "Custom Setup Mode - Drag troops to place them on the field" : "You control the Romans! Click to select and move/attack Barbarians OR Greeks. All teams fight each other in a three-way battle."}
         </p>
+        
+        {/* Decorative swords */}
+        <svg className="absolute bottom-2 left-8 w-8 h-8 text-red-400 opacity-50" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M6.92 5H5.14c-.47 0-.92.21-1.18.56L3.04 7H2v1h1.04l.92 1.44c.26.35.71.56 1.18.56h1.78c.47 0 .92-.21 1.18-.56L9.96 7H11V6H9.96L8.1 4.56C7.84 4.21 7.39 4 6.92 4z"/>
+        </svg>
+        <svg className="absolute bottom-2 right-8 w-8 h-8 text-blue-400 opacity-50" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M6.92 5H5.14c-.47 0-.92.21-1.18.56L3.04 7H2v1h1.04l.92 1.44c.26.35.71.56 1.18.56h1.78c.47 0 .92-.21 1.18-.56L9.96 7H11V6H9.96L8.1 4.56C7.84 4.21 7.39 4 6.92 4z"/>
+        </svg>
       </div>
 
       {/* Game Controls */}
-      <div className="game-ui p-4 flex flex-wrap gap-4 items-center justify-center">
+      <div className="game-ui p-4 flex flex-wrap gap-4 items-center justify-center relative">
+        {/* Decorative helmet */}
+        <svg className="absolute -top-2 left-2 w-8 h-8 text-yellow-400 opacity-40" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+        </svg>
+        
         {!isSetupMode && (
           <button
             onClick={() => setIsSetupMode(true)}
-            className="battle-button px-6 py-3 text-lg font-semibold bg-purple-600 hover:bg-purple-700"
+            className="battle-button px-6 py-3 text-lg font-semibold bg-purple-600 hover:bg-purple-700 relative"
           >
+            <svg className="absolute -left-2 -top-2 w-6 h-6 text-yellow-300" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            </svg>
             🎯 Custom Setup Mode
           </button>
         )}
@@ -723,46 +872,85 @@ function CodeConq() {
             <button
               onClick={startCustomGame}
               disabled={customUnits.length === 0}
-              className="battle-button px-6 py-3 text-lg font-semibold bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="battle-button px-6 py-3 text-lg font-semibold bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed relative"
             >
+              <svg className="absolute -left-2 -top-2 w-6 h-6 text-yellow-300" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
               🚀 Start Custom Game
             </button>
             
             <button
               onClick={resetCustomSetup}
-              className="battle-button px-6 py-3 text-lg font-semibold bg-red-600 hover:bg-red-700"
+              className="battle-button px-6 py-3 text-lg font-semibold bg-red-600 hover:bg-red-700 relative"
             >
+              <svg className="absolute -left-2 -top-2 w-6 h-6 text-yellow-300" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
               🔄 Reset Setup
             </button>
             
             <button
               onClick={() => setIsSetupMode(false)}
-              className="battle-button px-6 py-3 text-lg font-semibold bg-gray-600 hover:bg-gray-700"
+              className="battle-button px-6 py-3 text-lg font-semibold bg-gray-600 hover:bg-gray-700 relative"
             >
+              <svg className="absolute -left-2 -top-2 w-6 h-6 text-yellow-300" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
               ↩️ Back to Formations
             </button>
           </>
         )}
         
-        {!isSetupMode && (
-          <button
-            onClick={restartGame}
-            className="battle-button px-6 py-3 text-lg font-semibold"
-          >
-            🔄 Switch to {formations && Object.keys(formations).length > 0 ? Object.keys(formations)[(Object.keys(formations).indexOf(currentFormation) + 1) % Object.keys(formations).length] : "Next"} Formation
-          </button>
-        )}
-        
         {!isSetupMode && turn === "Romans" && gameStarted && (
-          <button
-            onClick={() => {
-              setTurn("Barbarians");
-              setSelectedId(null);
-            }}
-            className="battle-button px-6 py-3 text-lg font-semibold bg-yellow-600 hover:bg-yellow-700"
-          >
-            ⏭️ End Turn
-          </button>
+          <>
+            <button
+              onClick={() => setTurn("Barbarians")}
+              className="battle-button px-6 py-3 text-lg font-semibold bg-yellow-600 hover:bg-yellow-700 relative"
+            >
+              <svg className="absolute -left-2 -top-2 w-6 h-6 text-yellow-300" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+              ⏭️ End Turn
+            </button>
+            
+            {/* Merge count display */}
+            {!isSetupMode && gameStarted && (
+              <div className="text-blue-200 font-semibold bg-blue-900 bg-opacity-50 px-3 py-2 rounded border border-blue-600">
+                <span className="block text-sm">Merges Used:</span>
+                <span className="block text-lg">{mergeCount}/2</span>
+              </div>
+            )}
+            
+            {/* Always visible merge button when game is started */}
+            {!isSetupMode && gameStarted && (
+              <button
+                onClick={() => {
+                  if (mergeCount < 2) {
+                    setMergeMode(!mergeMode);
+                    setSelectedForMerge(null);
+                    setSelectedId(null);
+                    if (!mergeMode) {
+                      setLog((prevLog) => [`Merge mode activated! All teams can now merge their troops. Click on two adjacent troops of the same role to merge them. (${2 - mergeCount} merges remaining)`, ...prevLog]);
+                    } else {
+                      setLog((prevLog) => [`Merge mode deactivated.`, ...prevLog]);
+                    }
+                  } else {
+                    setLog((prevLog) => [`No more merges allowed this game!`, ...prevLog]);
+                  }
+                }}
+                disabled={mergeCount >= 2}
+                className={`battle-button px-6 py-3 text-lg font-semibold relative ${
+                  mergeMode ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-600 hover:bg-blue-700'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                <svg className="absolute -left-2 -top-2 w-6 h-6 text-yellow-300" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+                {mergeMode ? '🔄 Cancel Merge' : '🔗 Merge Troops'}
+              </button>
+            )}
+          </>
         )}
         
         <div className="text-yellow-200 font-semibold">
@@ -770,34 +958,77 @@ function CodeConq() {
             {isSetupMode ? "Custom Setup" : `Formation: ${currentFormation}`}
           </span>
           {!isSetupMode && <span className="block">Round: {round}</span>}
+          
+          {/* Formation Selector */}
+          {!isSetupMode && (
+            <div className="mt-3">
+              <label htmlFor="formation-select" className="block text-sm text-yellow-100 mb-1">
+                Switch Formation:
+              </label>
+              <select
+                id="formation-select"
+                value={currentFormation}
+                onChange={(e) => setCurrentFormation(e.target.value as keyof typeof formations)}
+                className="bg-gray-800 text-yellow-200 border border-yellow-600 rounded px-3 py-1 text-sm focus:outline-none focus:border-yellow-400"
+              >
+                <option value="Phalanx">Phalanx (16v16)</option>
+                <option value="Arch">Arch (8v8)</option>
+                <option value="Testudo">Testudo (8v8)</option>
+                <option value="Circle">Circle (8v8)</option>
+                <option value="Staggered">Staggered (10v10)</option>
+                <option value="Delta">Delta (8v8)</option>
+                <option value="Tercio">Tercio (8v8)</option>
+                <option value="Pincer">Pincer (8v8)</option>
+              </select>
+            </div>
+          )}
         </div>
+        
+        {/* Decorative shield */}
+        <svg className="absolute -bottom-2 right-2 w-8 h-8 text-yellow-400 opacity-40" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 1L3 5v6c0 5.55 3.84 9.74 9 11 5.16-1.26 9-5.45 9-11V5l-9-4z"/>
+        </svg>
       </div>
 
       {/* Setup Mode Controls */}
       {isSetupMode && (
-        <div className="game-ui p-4 w-full max-w-6xl">
+        <div className="game-ui p-4 w-full max-w-6xl relative">
+          {/* Decorative cross swords */}
+          <svg className="absolute -top-4 left-4 w-10 h-10 text-red-400 opacity-50" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M6.92 5H5.14c-.47 0-.92.21-1.18.56L3.04 7H2v1h1.04l.92 1.44c.26.35.71.56 1.18.56h1.78c.47 0 .92-.21 1.18-.56L9.96 7H11V6H9.96L8.1 4.56C7.84 4.21 7.39 4 6.92 4z"/>
+          </svg>
+          
           <div className="flex flex-wrap gap-4 items-center justify-center mb-4">
             <div className="text-center">
               <button
                 onClick={() => setSelectedTeam("Romans")}
-                className={`px-4 py-2 rounded font-semibold ${selectedTeam === "Romans" ? "bg-blue-600 text-white" : "bg-gray-600 text-gray-300"}`}
+                className={`px-4 py-2 rounded font-semibold ${selectedTeam === "Romans" ? "bg-blue-600 text-white" : "bg-gray-600 text-gray-300"} relative`}
               >
+                <svg className="absolute -left-1 -top-1 w-4 h-4 text-yellow-300" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
                 Romans ({getTeamCount("Romans")}/16)
               </button>
             </div>
             <div className="text-center">
               <button
                 onClick={() => setSelectedTeam("Barbarians")}
-                className={`px-4 py-2 rounded font-semibold ${selectedTeam === "Barbarians" ? "bg-red-600 text-white" : "bg-gray-600 text-gray-300"}`}
+                className={`px-4 py-2 rounded font-semibold ${selectedTeam === "Barbarians" ? "bg-red-600 text-white" : "bg-gray-600 text-gray-300"} relative`}
               >
+                <svg className="absolute -left-1 -top-1 w-4 h-4 text-yellow-300" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
                 Barbarians ({getTeamCount("Barbarians")}/16)
               </button>
             </div>
             <div className="text-center">
               <button
                 onClick={() => setSelectedTeam("Greeks")}
-                className={`px-4 py-2 rounded font-semibold ${selectedTeam === "Greeks" ? "bg-green-600 text-white" : "bg-gray-600 text-gray-300"}`}
+                className={`px-4 py-2 rounded font-semibold ${selectedTeam === "Greeks" ? "bg-green-600 text-white" : "bg-gray-600 text-gray-300"} relative`}
               >
+                <svg className="absolute -left-1 -top-1 w-4 h-4 text-yellow-300" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
                 Greeks ({getTeamCount("Greeks")}/16)
               </button>
             </div>
@@ -808,12 +1039,22 @@ function CodeConq() {
             <p>Click on placed troops to remove them</p>
             <p>Maximum 16 troops per team</p>
           </div>
+          
+          {/* Decorative helmet */}
+          <svg className="absolute -bottom-4 right-4 w-10 h-10 text-blue-400 opacity-50" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          </svg>
         </div>
       )}
 
       {/* Turn Info */}
       {!isSetupMode && (
-        <div className="game-ui p-4 text-center">
+        <div className="game-ui p-4 text-center relative">
+          {/* Decorative crown for turn display */}
+          <svg className="absolute -top-2 left-4 w-8 h-8 text-yellow-400 opacity-60" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 8l3 4h2l-3 4-3-4H9l3-4z"/>
+          </svg>
+          
           <div className="text-2xl font-bold text-yellow-200">
             {checkEnd() || `${turn.toUpperCase()} TURN`}
           </div>
@@ -822,6 +1063,11 @@ function CodeConq() {
              turn === "Barbarians" ? "Barbarians are thinking..." : 
              turn === "Greeks" ? "Greeks are thinking..." : ""}
           </div>
+          
+          {/* Decorative sword */}
+          <svg className="absolute -bottom-2 right-4 w-8 h-8 text-yellow-400 opacity-60" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M6.92 5H5.14c-.47 0-.92.21-1.18.56L3.04 7H2v1h1.04l.92 1.44c.26.35.71.56 1.18.56h1.78c.47 0 .92-.21 1.18-.56L9.96 7H11V6H9.96L8.1 4.56C7.84 4.21 7.39 4 6.92 4z"/>
+          </svg>
         </div>
       )}
       
@@ -829,7 +1075,12 @@ function CodeConq() {
       <div className="flex flex-col xl:flex-row gap-6 w-full max-w-8xl">
         {/* Battle Log - Left Side */}
         {!isSetupMode && (
-          <div className="game-ui p-4 xl:w-80 flex-shrink-0">
+          <div className="game-ui p-4 xl:w-80 flex-shrink-0 relative">
+            {/* Decorative scroll */}
+            <svg className="absolute -top-2 left-2 w-6 h-6 text-yellow-400 opacity-60" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/>
+            </svg>
+            
             <h3 className="text-yellow-200 font-bold mb-3 text-lg border-b border-yellow-600 pb-2">Battle Log</h3>
             <div className="max-h-96 overflow-y-auto space-y-1">
               {log && log.map((line, i) => (
@@ -838,6 +1089,11 @@ function CodeConq() {
                 </div>
               ))}
             </div>
+            
+            {/* Decorative quill */}
+            <svg className="absolute -bottom-2 right-2 w-6 h-6 text-yellow-400 opacity-60" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+            </svg>
           </div>
         )}
         
@@ -857,75 +1113,85 @@ function CodeConq() {
                 const key = `${x},${y}`;
                 const isMove = highlightMove && highlightMove.includes(key);
                 const isAttack = highlightAttack && highlightAttack.includes(key);
-                const Icon = u?.Icon;
                 const percent = u ? (u.hp / u.maxHp) * 100 : 0;
-                const role = u?.role;
                 
                 // Determine cell type for visual variety
                 const isPath = (x === 3 || x === 4) && (y === 3 || y === 4); // Center paths
                 const cellClass = isPath ? "cobblestone-path" : "grass-cell";
                 
                 return (
-                  <motion.div
+                  <div
                     key={key}
                     onClick={() => handleClick(x, y)}
-                    onDragOver={isSetupMode ? handleDragOver : undefined}
-                    onDrop={isSetupMode ? (e) => handleDrop(e, x, y) : undefined}
-                    whileTap={{ scale: 0.95 }}
-                    whileHover={{ scale: 1.02 }}
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDrop(e, x, y)}
+                    draggable={!isSetupMode && mergeMode && u && (u.team === "Romans" || u.team === "Barbarians" || u.team === "Greeks")}
+                    onDragStart={(e: React.DragEvent) => {
+                      if (!isSetupMode && mergeMode && u && (u.team === "Romans" || u.team === "Barbarians" || u.team === "Greeks")) {
+                        setSelectedId(u.id);
+                        e.dataTransfer.setData('text/plain', u.id);
+                      }
+                    }}
                     className={`w-16 h-20 sm:w-20 sm:h-24 flex flex-col items-center justify-center text-xs sm:text-sm cursor-pointer transition-all duration-200 relative
                     ${cellClass}
                     ${isSelected ? "unit-selected" : ""}
                     ${isMove ? "movement-highlight" : ""}
                     ${isAttack ? "attack-highlight" : ""}
                     ${u ? (u.team === "Romans" ? "unit-roman" : u.team === "Greeks" ? "unit-greek" : "unit-barbarian") : ""}
-                    ${isSetupMode && draggedTroop && !u ? "drag-over" : ""}`}
+                    ${isSetupMode && draggedTroop && !u ? "drag-over" : ""}
+                    ${mergeMode && u && u.team === turn && selectedForMerge && u.role === selectedForMerge.role ? "merge-highlight" : ""}
+                    ${mergeMode && u && u.team === turn && selectedForMerge && u.id === selectedForMerge.id ? "merge-selected" : ""}
+                    ${!isSetupMode && mergeMode && u && (u.team === "Romans" || u.team === "Barbarians" || u.team === "Greeks") ? "cursor-grab active:cursor-grabbing" : ""}`}
                   >
                     {u ? (
-                      <>
-                        <div className="text-2xl mb-1 text-white drop-shadow-lg">{Icon}</div>
-                        
-                        {/* Health Bar */}
-                        <div className="w-full h-2 bg-gray-800 rounded-full border border-gray-600 mb-1">
-                          <div 
-                            className="health-bar rounded-full h-full" 
-                            style={{ width: `${percent}%` }}
-                          ></div>
-                        </div>
-                        
-                        {/* Unit Info */}
-                        <div className="text-xss text-white text-center drop-shadow-md">
-                          <div className="font-semibold">{u.hp} HP</div>
-                          <div className="text-xs opacity-80">{role}</div>
+                      <div className="relative w-full h-full flex flex-col items-center justify-center">
+                          {/* Unit Icon */}
+                          <div className="text-2xl mb-1">
+                            {typeof u.Icon === 'string' ? u.Icon : <u.Icon />}
+                          </div>
                           
-                          {/* Ammunition indicator for ranged units */}
+                          {/* Unit Name */}
+                          <div className="text-xs text-center font-semibold text-yellow-200 leading-tight">
+                            {u.name}
+                          </div>
+                          
+                          {/* Health Display */}
+                          <div className="text-xs text-white font-bold">
+                            {u.hp} HP
+                          </div>
+                          
+                          {/* Health Bar */}
+                          <div className="w-full bg-gray-800 rounded-full h-1 mt-1 border border-gray-600">
+                            <div 
+                              className="health-bar rounded-full h-full" 
+                              style={{ width: `${percent}%` }}
+                            ></div>
+                          </div>
+                          
+                          {/* Ammo Display for Ranged Units */}
                           {u.ammo && u.ammo > 0 && (
-                            <div className="text-xs text-blue-300 font-bold">
+                            <div className="text-xs text-cyan-400 mt-1">
                               🏹{u.ammo}
                             </div>
                           )}
                           
-                          {/* Out of ammo indicator */}
+                          {/* Out of Ammo Indicator */}
                           {u.ammo === 0 && u.role && (u.role.includes("Archer") || u.role.includes("Ballista") || u.role.includes("Scorpion") || u.role.includes("Velites") || u.role.includes("Shaman")) && (
-                            <div className="text-xs text-red-300 font-bold">
+                            <div className="text-xs text-red-400 mt-1">
                               ⚔️
                             </div>
                           )}
+                          
+                          {/* Movement and Attack Indicators */}
+                          {isMove && <div className="text-green-400 text-lg">🚶‍♂️</div>}
+                          {isAttack && <div className="text-red-400 text-lg">⚔️</div>}
                         </div>
-                        
-                        {/* Team indicator */}
-                        <div className={`absolute top-1 right-1 w-3 h-3 rounded-full border-2 border-white
-                          ${u.team === "Romans" ? "bg-blue-600" : u.team === "Greeks" ? "bg-green-600" : "bg-red-600"}`}>
-                        </div>
-                      </>
                     ) : (
-                      // Empty cell with subtle grass texture
                       <div className="w-full h-full flex items-center justify-center">
-                        {isMove && <div className="text-blue-400 text-lg">⚡</div>}
-                        {isAttack && <div className="text-red-400 text-lg">⚔️</div>}
+                        <div className="text-gray-600 text-xs"></div>
                       </div>
                     )}
-                  </motion.div>
+                  </div>
                 );
               })
             )}
@@ -933,7 +1199,12 @@ function CodeConq() {
         </div>
         
         {/* Right Side Panel */}
-        <div className="game-ui p-4 xl:w-80 flex-shrink-0">
+        <div className="game-ui p-4 xl:w-80 flex-shrink-0 relative">
+          {/* Decorative shield */}
+          <svg className="absolute -top-2 left-2 w-6 h-6 text-yellow-400 opacity-60" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 1L3 5v6c0 5.55 3.84 9.74 9 11 5.16-1.26 9-5.45 9-11V5l-9-4z"/>
+          </svg>
+          
           {isSetupMode ? (
             // Troop Selection Panel
             <>
@@ -947,8 +1218,13 @@ function CodeConq() {
                     draggable
                     onDragStart={() => setDraggedTroop(troop)}
                     onDragEnd={() => setDraggedTroop(null)}
-                    className="bg-gray-700 p-3 rounded cursor-move hover:bg-gray-600 transition-colors border border-gray-600"
+                    className="bg-gray-700 p-3 rounded cursor-move hover:bg-gray-600 transition-colors border border-gray-600 relative"
                   >
+                    {/* Decorative star for draggable troops */}
+                    <svg className="absolute -top-1 -right-1 w-4 h-4 text-yellow-300 opacity-70" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                    
                     <div className="flex items-center gap-2">
                       <div className="text-2xl">{ICON_MAP[troop.Icon as keyof typeof ICON_MAP] || "⚔️"}</div>
                       <div className="flex-1">
@@ -1013,6 +1289,11 @@ function CodeConq() {
               </>
             )
           )}
+          
+          {/* Decorative helmet */}
+          <svg className="absolute -bottom-2 right-2 w-6 h-6 text-yellow-400 opacity-60" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          </svg>
         </div>
       </div>
     </div>

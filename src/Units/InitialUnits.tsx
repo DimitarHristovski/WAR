@@ -6,6 +6,7 @@ import {
     GiHelmet,
     GiBo,
     GiAce,
+    GiCrown,
   } from "react-icons/gi";
   import { FaCrown } from "react-icons/fa";
   
@@ -76,15 +77,22 @@ const generateRandomStats = (role: string) => {
 
   switch (role) {
     // Roman Units
-    case "Legionary":
-      hp = Math.floor(Math.random() * (300 - 200) + 200);
+    case "Roman King":
+      hp = Math.floor(Math.random() * (440 - 400) + 400);
       maxHp = hp;
-      attack = Math.floor(Math.random() * (150 - 100) + 100);
+      attack = Math.floor(Math.random() * (310 - 280) + 280);
       ammo = 0; // Melee unit
       range = 1;
       move = 1;
       break;
-     
+      case "Legionary":
+        hp = Math.floor(Math.random() * (300 - 200) + 200);
+        maxHp = hp;
+        attack = Math.floor(Math.random() * (150 - 100) + 100);
+        ammo = 0; // Melee unit
+        range = 1;
+        move = 1;
+        break;
     case "Centurion":
       hp = Math.floor(Math.random() * (400 - 300) + 300);
       maxHp = hp;
@@ -159,7 +167,7 @@ const generateRandomStats = (role: string) => {
       break;
       // Barbarian Units
     case "Barbarian Warrior":
-      hp = Math.floor(Math.random() * (300 - 200) + 200);
+      hp = Math.floor(Math.random() * (300 - 270) + 270);
       maxHp = hp;
       attack = Math.floor(Math.random() * (150 - 100) + 100);
       ammo = 0; // Melee unit
@@ -175,9 +183,9 @@ const generateRandomStats = (role: string) => {
         move = 1;
         break;
       case "Barbarian Chief":
-        hp = Math.floor(Math.random() * (550 - 350) + 350);
+        hp = Math.floor(Math.random() * (440 - 400) + 400);
         maxHp = hp;
-        attack = Math.floor(Math.random() * (250 - 200) + 200);
+        attack = Math.floor(Math.random() * (310 - 280) + 280);
         ammo = 0; // Melee unit
         range = 1;
         move = 1;
@@ -195,8 +203,8 @@ const generateRandomStats = (role: string) => {
         hp = Math.floor(Math.random() * (300 - 250) + 250);
         maxHp = hp;
         attack = Math.floor(Math.random() * (250 - 200) + 200);
-        ammo = 0; // Melee unit
-        range = 1;
+        ammo = 5; // Melee unit
+        range = 3;
         move = 3;
         break;
       case "Barbarian Shaman":
@@ -357,6 +365,15 @@ case "Greek Standard Bearer":
   move = 1;
   break;
 
+  case "Macedonian King":
+  hp = Math.floor(Math.random() * (440 - 400) + 400);
+  maxHp = hp;
+  attack = Math.floor(Math.random() * (310 - 280) + 280);
+  ammo = 0;
+  range = 1;
+  move = 1;
+  break;
+
     default:
       hp = 1;
       maxHp = 1;
@@ -373,7 +390,7 @@ case "Greek Standard Bearer":
       // Formation 0: Chess (16 troops each) - Chess board formation
       Phalanx: [
         // ROMAN UNITS (16 total) - Chess board formation
-        { id: "centurion", team: "Romans", name: "Centurion", ...generateRandomStats("Centurion"), x: 3, y: 0, role: "Centurion", Icon: getIconComponent(GiHelmet) },
+        { id: "King", team: "Romans", name: "Roman King", ...generateRandomStats("Roman King"), x: 3, y: 0, role: "Roman King", Icon: getIconComponent(GiCrown) },
         { id: "archer3", team: "Romans", name: "Archer", ...generateRandomStats("Archer"), x: 2, y: 0, role: "Archer", Icon: getIconComponent(GiArcher) },
         { id: "archer5", team: "Romans", name: "Archer", ...generateRandomStats("Archer"), x: 5, y: 0, role: "Archer", Icon: getIconComponent(GiArcher) },
         { id: "cavalry1", team: "Romans", name: "Cavalry", ...generateRandomStats("Cavalry"), x: 1, y: 0, role: "Cavalry", Icon: getIconComponent(GiCavalry) },
@@ -403,14 +420,14 @@ case "Greek Standard Bearer":
         { id: "barbarian_axeman1", team: "Barbarians", name: "Barbarian Axeman", ...generateRandomStats("Barbarian Axeman"), x: 0, y: 7, role: "Barbarian Axeman", Icon: getIconComponent(GiCrossedSwords) },
         { id: "barbarian_axeman2", team: "Barbarians", name: "Barbarian Axeman", ...generateRandomStats("Barbarian Axeman"), x: 7, y: 7, role: "Barbarian Axeman", Icon: getIconComponent(GiCrossedSwords) },
         //Barbarian Warriors
-        { id: "barbarian1", team: "Barbarians", name: "Barbarian Warlord", ...generateRandomStats("Barbarian Warlord"), x: 0, y: 6, role: "Barbarian Warlord", Icon: getIconComponent(GiAce) },
-        { id: "barbarian2", team: "Barbarians", name: "Barbarian Warlord", ...generateRandomStats("Barbarian Warlord"), x: 1, y: 6, role: "Barbarian Warlord", Icon: getIconComponent(GiAce) },
-        { id: "barbarian3", team: "Barbarians", name: "Barbarian Warlord", ...generateRandomStats("Barbarian Warlord"), x: 2, y: 6, role: "Barbarian Warlord", Icon: getIconComponent(GiAce) },
-        { id: "barbarian4", team: "Barbarians", name: "Barbarian Warlord", ...generateRandomStats("Barbarian Warlord"), x: 4, y: 6, role: "Barbarian Warlord", Icon: getIconComponent(GiAce) },
-        { id: "barbarian5", team: "Barbarians", name: "Barbarian Warlord", ...generateRandomStats("Barbarian Warlord"), x: 5, y: 6, role: "Barbarian Warlord", Icon: getIconComponent(GiAce) },
-        { id: "barbarian6", team: "Barbarians", name: "Barbarian Warlord", ...generateRandomStats("Barbarian Warlord"), x: 6, y: 6, role: "Barbarian Warlord", Icon: getIconComponent(GiAce) },
-        { id: "barbarian7", team: "Barbarians", name: "Barbarian Warlord", ...generateRandomStats("Barbarian Warlord"), x: 7, y: 6, role: "Barbarian Warlord", Icon: getIconComponent(GiAce) },
-        { id: "barbarian8", team: "Barbarians", name: "Barbarian Warlord", ...generateRandomStats("Barbarian Warlord"), x: 3, y: 6, role: "Barbarian Warlord", Icon: getIconComponent(GiAce) }
+        { id: "barbarian1", team: "Barbarians", name: "Barbarian Warrior", ...generateRandomStats("Barbarian Warrior"), x: 0, y: 6, role: "Barbarian Warrior", Icon: getIconComponent(GiAce) },
+        { id: "barbarian2", team: "Barbarians", name: "Barbarian Warrior", ...generateRandomStats("Barbarian Warrior"), x: 1, y: 6, role: "Barbarian Warrior", Icon: getIconComponent(GiAce) },
+        { id: "barbarian3", team: "Barbarians", name: "Barbarian Warrior", ...generateRandomStats("Barbarian Warrior"), x: 2, y: 6, role: "Barbarian Warrior", Icon: getIconComponent(GiAce) },
+        { id: "barbarian4", team: "Barbarians", name: "Barbarian Warrior", ...generateRandomStats("Barbarian Warrior"), x: 4, y: 6, role: "Barbarian Warrior", Icon: getIconComponent(GiAce) },
+        { id: "barbarian5", team: "Barbarians", name: "Barbarian Warrior", ...generateRandomStats("Barbarian Warrior"), x: 5, y: 6, role: "Barbarian Warrior", Icon: getIconComponent(GiAce) },
+        { id: "barbarian6", team: "Barbarians", name: "Barbarian Warrior", ...generateRandomStats("Barbarian Warrior"), x: 6, y: 6, role: "Barbarian Warrior", Icon: getIconComponent(GiAce) },
+        { id: "barbarian7", team: "Barbarians", name: "Barbarian Warrior", ...generateRandomStats("Barbarian Warrior"), x: 7, y: 6, role: "Barbarian Warrior", Icon: getIconComponent(GiAce) },
+        { id: "barbarian8", team: "Barbarians", name: "Barbarian Warrior", ...generateRandomStats("Barbarian Warrior"), x: 3, y: 6, role: "Barbarian Warrior", Icon: getIconComponent(GiAce) }
       ],
     
       Arch: [
